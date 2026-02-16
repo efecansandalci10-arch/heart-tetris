@@ -23,128 +23,61 @@ canvas{
 <body>
 <canvas id="canvas"></canvas>
 <script>
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
 function resize(){
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
 resize();
-window.addEventListener("resize",resize);
+window.addEventListener("resize", resize);
 
 /* ---------------- MODLAR ---------------- */
-let mode="intro";
+let mode = "hearts"; // direkt kalplerle başlayalım
+let hearts = [];
 
-/* ---------------- INTRO ---------------- */
-let y=-100;
-let velocity=2;
-let gravity=0.4;
-let bounce=0.7;
-let introFinished=false;
-
-function drawIntro(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  let fontSize=Math.min(canvas.width/5,100);
-  ctx.font="bold "+fontSize+"px Arial";
-  ctx.textAlign="center";
-  ctx.shadowColor="#ff2e88";
-  ctx.shadowBlur=30;
-  ctx.fillStyle="#ff4e8a";
-  ctx.fillText("❤️ŞEVVAL❤️",canvas.width/2,y);
-}
-
-function updateIntro(){
-  velocity+=gravity;
-  y+=velocity;
-  let fontSize=Math.min(canvas.width/5,100);
-  if(y>canvas.height-fontSize){
-    y=canvas.height-fontSize;
-    velocity*=-bounce;
-    if(Math.abs(velocity)<1.5 && !introFinished){
-      introFinished=true;
-      setTimeout(()=>{
-        mode="hearts";
-        initHearts();
-      },1200);
-    }
-  }
-  drawIntro();
-}
-
-/* ---------------- HEART TEXT ---------------- */
-let hearts=[];
-let targets=[];
-let gridSize;
-let dropIndex=0;
-
-function initHearts(){
-  gridSize=Math.max(14, Math.floor(canvas.width/40));
-  createTargets("Je t'aime ma chérie");
-}
-
-function createTargets(text){
-  targets=[];
-  hearts=[];
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  let fontSize=Math.min(canvas.width/9,90);
-  ctx.font="bold "+fontSize+"px Arial";
-  ctx.textAlign="center";
-  ctx.fillStyle="white";
-  ctx.fillText(text,canvas.width/2,canvas.height/2);
-  let data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-  for(let y=0;y<canvas.height;y+=gridSize){
-    for(let x=0;x<canvas.width;x+=gridSize){
-      let index=(y*canvas.width+x)*4;
-      if(data[index+3]>128){
-        targets.push({x:x,y:y});
-      }
-    }
-  }
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
-
-function spawnHeart(){
-  if(dropIndex>=targets.length) return;
-  let t=targets[dropIndex];
-  hearts.push({x:t.x,y:-20,targetY:t.y,speed:5});
-  dropIndex++;
+/* ---------------- KALP ARKAPLAN ---------------- */
+let heartCount = 0;
+const maxHearts = 200; // kaç kalp düşecek
+function spawnBackgroundHeart(){
+  if(heartCount >= maxHearts) return;
+  const x = Math.random() * canvas.width;
+  const y = -30;
+  const speed = 1 + Math.random() * 2;
+  const size = 12 + Math.random() * 10;
+  hearts.push({x, y, speed, size});
+  heartCount++;
 }
 
 function updateHearts(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(dropIndex<targets.length) spawnHeart();
+  spawnBackgroundHeart();
   hearts.forEach(h=>{
-    if(h.y<h.targetY) h.y+=h.speed;
-    drawHeart(h.x,h.y);
+    h.y += h.speed;
+    drawHeart(h.x, h.y, h.size);
   });
 }
 
-function drawHeart(x,y){
-  ctx.font=gridSize+"px Arial";
-  ctx.textAlign="center";
-  ctx.shadowColor="#ff2e88";
-  ctx.shadowBlur=12;
-  ctx.fillStyle="#ff4e8a";
-  ctx.fillText("❤️",x,y);
+/* ---------------- ÇİZME ---------------- */
+function drawHeart(x,y,size){
+  ctx.font = size + "px Arial";
+  ctx.textAlign = "center";
+  ctx.shadowColor = "#ff2e88";
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = "#ff4e8a";
+  ctx.fillText("❤️", x, y);
 }
 
-/* ---------------- MESSAGE MODE ---------------- */
-let message = "";
+/* ---------------- MESAJ ---------------- */
+let message = "Seni her şeyden çok seviyorum, beni sevdiğin için çok şanslıyım bazen imbécile olsam da benden bıkmadığın için de çok şanslıyım seni mutlu etmek ve beraber mutlu olmak için elimden gelenin fazlasını yapacağım. Birlikte nice sevgililer günlerine :)";
 let displayed = "";
 let charIndex = 0;
-let messageSpeed = 2; // karakter başına frame sayısı
+let messageSpeed = 3; // frame başına karakter
 let frameCount = 0;
-
-function setMessage(msg){
-  message = msg;
-  displayed = "";
-  charIndex = 0;
-  frameCount = 0;
-}
+let messageStarted = false;
 
 function updateMessage(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
   frameCount++;
   if(charIndex < message.length && frameCount % messageSpeed === 0){
     displayed += message[charIndex];
@@ -159,17 +92,15 @@ function updateMessage(){
 
 /* ---------------- LOOP ---------------- */
 function loop(){
-  if(mode==="intro"){
-    updateIntro();
-  } else if(mode==="hearts"){
+  if(mode === "hearts"){
     updateHearts();
-    if(dropIndex>=targets.length){
-      setTimeout(()=>{
-        mode="message";
-        setMessage("Seni her şeyden çok seviyorum, beni sevdiğin için çok şanslıyım bazen imbécile olsam da benden bıkmadığın için de çok şanslıyım seni mutlu etmek ve beraber mutlu olmak için elimden gelenin fazlısını yapacağım. Birlikte nice sevgililer günlerine :)");
-      },1000);
+    // bütün kalpler ekrana gelince mesaj başlasın
+    if(heartCount >= maxHearts && !messageStarted){
+      messageStarted = true;
+      setTimeout(()=>{mode="message";}, 1000);
     }
-  } else if(mode==="message"){
+  } else if(mode === "message"){
+    updateHearts(); // kalpler arkada düşmeye devam etsin
     updateMessage();
   }
   requestAnimationFrame(loop);
