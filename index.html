@@ -3,27 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEVVAL ❤️</title>
+<title>SEVVAL ❤️ Tetris</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+*{margin:0;padding:0;box-sizing:border-box;}
 
 body{
-background:linear-gradient(180deg,#111,#1a0010);
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
 height:100vh;
 overflow:hidden;
+background:#0f0f0f;
 font-family:Arial, sans-serif;
 }
 
 canvas{
+display:block;
 touch-action:none;
 }
 </style>
@@ -31,10 +24,10 @@ touch-action:none;
 
 <body>
 
-<canvas id="game"></canvas>
+<canvas id="canvas"></canvas>
 
 <script>
-const canvas = document.getElementById("game");
+const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 function resize(){
@@ -44,35 +37,146 @@ canvas.height = window.innerHeight;
 resize();
 window.addEventListener("resize", resize);
 
-let y = -100;
-let speed = 2;
+/* ----------------- INTRO ANIMATION ----------------- */
 
-function drawText(){
+let mode = "intro";
+let y = -100;
+let velocity = 2;
+let gravity = 0.4;
+let bounce = 0.7;
+let introDone = false;
+
+function drawIntro(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
-// glow efekti
-ctx.shadowColor = "#ff2e88";
-ctx.shadowBlur = 25;
-
-ctx.fillStyle = "#ff4e8a";
-ctx.textAlign = "center";
-ctx.font = "bold " + (canvas.width/8) + "px Arial";
-
+let fontSize = Math.min(canvas.width/6,120);
+ctx.font = "bold " + fontSize + "px Arial";
+ctx.textAlign="center";
+ctx.shadowColor="#ff2e88";
+ctx.shadowBlur=30;
+ctx.fillStyle="#ff4e8a";
 ctx.fillText("SEVVAL ❤️", canvas.width/2, y);
 }
 
-function animate(){
-y += speed;
+function updateIntro(){
+velocity += gravity;
+y += velocity;
 
-if(y > canvas.height + 50){
-y = -100;
+let fontSize = Math.min(canvas.width/6,120);
+if(y > canvas.height - fontSize/2){
+y = canvas.height - fontSize/2;
+velocity *= -bounce;
+
+if(Math.abs(velocity) < 2 && !introDone){
+introDone = true;
+setTimeout(()=>{
+mode="tetris";
+initTetris();
+},1500);
+}
 }
 
-drawText();
-requestAnimationFrame(animate);
+drawIntro();
+requestAnimationFrame(loop);
 }
 
-animate();
+/* ----------------- TETRIS ----------------- */
+
+let COLS=10;
+let ROWS=20;
+let SIZE;
+let board;
+let piece;
+let score=0;
+
+function initTetris(){
+board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+score=0;
+resizeTetris();
+spawnPiece();
+}
+
+function resizeTetris(){
+SIZE = Math.floor(canvas.width / COLS);
+canvas.height = SIZE * ROWS;
+}
+
+function spawnPiece(){
+piece = {
+x:Math.floor(COLS/2),
+y:0
+};
+}
+
+function drawHeart(x,y){
+ctx.font=(SIZE-4)+"px Arial";
+ctx.fillText("❤️", x*SIZE+2, y*SIZE+SIZE-4);
+}
+
+function drawTetris(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+board.forEach((row,y)=>{
+row.forEach((val,x)=>{
+if(val) drawHeart(x,y);
+});
+});
+
+drawHeart(piece.x,piece.y);
+}
+
+function moveDown(){
+piece.y++;
+if(piece.y>=ROWS){
+board[piece.y-1][piece.x]=1;
+spawnPiece();
+}
+}
+
+function moveLeft(){
+if(piece.x>0) piece.x--;
+}
+
+function moveRight(){
+if(piece.x<COLS-1) piece.x++;
+}
+
+/* --------- FIXED TOUCH CONTROLS --------- */
+
+canvas.addEventListener("touchstart",e=>{
+let rect = canvas.getBoundingClientRect();
+let touchX = e.touches[0].clientX - rect.left;
+
+if(touchX < canvas.width/3){
+moveLeft();
+}else if(touchX > canvas.width*2/3){
+moveRight();
+}else{
+moveDown();
+}
+});
+
+/* Masaüstü kontrol */
+document.addEventListener("keydown",e=>{
+if(mode!=="tetris") return;
+if(e.key==="ArrowLeft") moveLeft();
+if(e.key==="ArrowRight") moveRight();
+if(e.key==="ArrowDown") moveDown();
+});
+
+/* ----------------- MAIN LOOP ----------------- */
+
+function loop(){
+if(mode==="intro"){
+updateIntro();
+}else if(mode==="tetris"){
+moveDown();
+drawTetris();
+setTimeout(()=>requestAnimationFrame(loop),500);
+return;
+}
+}
+loop();
 </script>
 
 </body>
