@@ -2,7 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Heart Tetris</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Heart Tetris</title>
+
 <style>
 body{
 margin:0;
@@ -13,20 +15,28 @@ align-items:center;
 font-family:Arial;
 color:#ff4e8a;
 }
+
 canvas{
 background:#000;
 margin-top:20px;
 border:4px solid #ff4e8a;
 border-radius:10px;
 box-shadow:0 0 20px #ff4e8a;
+touch-action:none;
+}
+
+.score{
+margin-top:10px;
+font-size:18px;
 }
 </style>
 </head>
+
 <body>
 
-<h2>💖 Heart Tetris 💖</h2>
-<canvas id="game" width="300" height="500"></canvas>
-<p>← → ile hareket et</p>
+<h2>💖 Mobile Heart Tetris 💖</h2>
+<canvas id="game"></canvas>
+<div class="score">Skor: <span id="score">0</span></div>
 
 <script>
 const canvas=document.getElementById("game");
@@ -34,24 +44,31 @@ const ctx=canvas.getContext("2d");
 
 const COLS=10;
 const ROWS=20;
-const SIZE=25;
+
+let SIZE=Math.floor(window.innerWidth/12);
+canvas.width=COLS*SIZE;
+canvas.height=ROWS*SIZE;
 
 let board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+let score=0;
+const scoreEl=document.getElementById("score");
 
 let piece={x:4,y:0};
 
 function drawHeart(x,y){
-ctx.font="20px Arial";
-ctx.fillText("❤️",x*SIZE+2,y*SIZE+22);
+ctx.font=(SIZE-4)+"px Arial";
+ctx.fillText("❤️",x*SIZE+2,y*SIZE+SIZE-4);
 }
 
 function draw(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
+
 board.forEach((row,y)=>{
 row.forEach((val,x)=>{
 if(val) drawHeart(x,y);
 });
 });
+
 drawHeart(piece.x,piece.y);
 }
 
@@ -60,18 +77,29 @@ piece.y++;
 if(piece.y>=ROWS){
 board[piece.y-1][piece.x]=1;
 piece.y=0;
+score+=10;
+scoreEl.textContent=score;
 }
 }
 
-document.addEventListener("keydown",e=>{
-if(e.key==="ArrowLeft" && piece.x>0) piece.x--;
-if(e.key==="ArrowRight" && piece.x<COLS-1) piece.x++;
+canvas.addEventListener("touchstart",e=>{
+let touchX=e.touches[0].clientX;
+
+if(touchX<window.innerWidth/2 && piece.x>0){
+piece.x--;
+}else if(piece.x<COLS-1){
+piece.x++;
+}
+});
+
+canvas.addEventListener("touchmove",e=>{
+moveDown();
 });
 
 setInterval(()=>{
 moveDown();
 draw();
-},400);
+},500);
 </script>
 
 </body>
