@@ -86,34 +86,47 @@ drawIntro();
 requestAnimationFrame(loop);
 }
 
-/* ---------------- HEART BUILD MODE ---------------- */
+/* ---------------- HEART TEXT MODE ---------------- */
 
 let hearts=[];
+let targets=[];
 let gridSize;
-let targetShape=[];
-let dropInterval=300;
 let lastDrop=0;
+let dropInterval=80;
 
 function initHearts(){
-gridSize=Math.floor(canvas.width/20);
 
-createHeartShape();
+gridSize=Math.max(12, Math.floor(canvas.width/45));
+
+createTextShape("Je t'aime ma chérie");
 }
 
-function createHeartShape(){
-let cols=15;
-let rows=13;
+function createTextShape(text){
 
-for(let r=0;r<rows;r++){
-for(let c=0;c<cols;c++){
+let offCanvas=document.createElement("canvas");
+let offCtx=offCanvas.getContext("2d");
 
-let x=c-cols/2;
-let y=r-rows/3;
+offCanvas.width=canvas.width;
+offCanvas.height=canvas.height;
 
-if((x*x+y*y-1)**3 - x*x*y*y*y <=0){
-targetShape.push({
-x:c,
-y:r
+let fontSize=Math.min(canvas.width/10,80);
+
+offCtx.fillStyle="white";
+offCtx.textAlign="center";
+offCtx.font="bold "+fontSize+"px Arial";
+offCtx.fillText(text,offCanvas.width/2,offCanvas.height/2);
+
+let imageData=offCtx.getImageData(0,0,offCanvas.width,offCanvas.height).data;
+
+for(let y=0;y<offCanvas.height;y+=gridSize){
+for(let x=0;x<offCanvas.width;x+=gridSize){
+
+let index=(y*offCanvas.width+x)*4;
+
+if(imageData[index+3]>128){
+targets.push({
+x:x,
+y:y
 });
 }
 }
@@ -121,19 +134,20 @@ y:r
 }
 
 function spawnHeart(){
-if(targetShape.length===0) return;
+if(targets.length===0) return;
 
-let next=targetShape.shift();
+let t=targets.shift();
 
 hearts.push({
-x:canvas.width/2 - (7*gridSize) + next.x*gridSize,
+x:t.x,
 y:-20,
-targetY:canvas.height - (13-next.y)*gridSize,
+targetY:t.y,
 speed:4
 });
 }
 
 function updateHearts(timestamp){
+
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 if(timestamp-lastDrop>dropInterval){
@@ -152,7 +166,7 @@ requestAnimationFrame(loop);
 }
 
 function drawHeart(x,y){
-ctx.font=(gridSize)+"px Arial";
+ctx.font=gridSize+"px Arial";
 ctx.textAlign="center";
 ctx.shadowColor="#ff2e88";
 ctx.shadowBlur=15;
