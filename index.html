@@ -6,28 +6,40 @@
 <title>Mobile Heart Tetris</title>
 
 <style>
-body{
+*{
 margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
 background:#111;
 display:flex;
 flex-direction:column;
 align-items:center;
-font-family:Arial;
+justify-content:center;
+height:100vh;
+font-family:Arial, sans-serif;
 color:#ff4e8a;
+overflow:hidden;
+}
+
+h2{
+margin-top:10px;
+font-size:22px;
 }
 
 canvas{
 background:#000;
-margin-top:20px;
 border:4px solid #ff4e8a;
-border-radius:10px;
-box-shadow:0 0 20px #ff4e8a;
+border-radius:12px;
+box-shadow:0 0 25px #ff4e8a;
 touch-action:none;
 }
 
 .score{
 margin-top:10px;
-font-size:18px;
+font-size:20px;
 }
 </style>
 </head>
@@ -39,25 +51,30 @@ font-size:18px;
 <div class="score">Skor: <span id="score">0</span></div>
 
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-const COLS=10;
-const ROWS=20;
+const COLS = 10;
+const ROWS = 20;
+let SIZE;
 
-let SIZE=Math.floor(window.innerWidth/12);
-canvas.width=COLS*SIZE;
-canvas.height=ROWS*SIZE;
+function resizeGame(){
+canvas.width = window.innerWidth * 0.95;
+canvas.height = window.innerHeight * 0.75;
+SIZE = canvas.width / COLS;
+}
+resizeGame();
+window.addEventListener("resize", resizeGame);
 
-let board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
-let score=0;
-const scoreEl=document.getElementById("score");
+let board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+let score = 0;
+const scoreEl = document.getElementById("score");
 
-let piece={x:4,y:0};
+let piece = { x:4, y:0 };
 
 function drawHeart(x,y){
-ctx.font=(SIZE-4)+"px Arial";
-ctx.fillText("❤️",x*SIZE+2,y*SIZE+SIZE-4);
+ctx.font = (SIZE-4) + "px Arial";
+ctx.fillText("❤️", x*SIZE+2, y*SIZE+SIZE-4);
 }
 
 function draw(){
@@ -74,21 +91,30 @@ drawHeart(piece.x,piece.y);
 
 function moveDown(){
 piece.y++;
-if(piece.y>=ROWS){
-board[piece.y-1][piece.x]=1;
-piece.y=0;
-score+=10;
-scoreEl.textContent=score;
+if(piece.y >= ROWS){
+board[piece.y-1][piece.x] = 1;
+piece.y = 0;
+piece.x = Math.floor(Math.random()*COLS);
+score += 10;
+scoreEl.textContent = score;
 }
+}
+
+function moveLeft(){
+if(piece.x > 0) piece.x--;
+}
+
+function moveRight(){
+if(piece.x < COLS-1) piece.x++;
 }
 
 canvas.addEventListener("touchstart",e=>{
-let touchX=e.touches[0].clientX;
+let touchX = e.touches[0].clientX;
 
-if(touchX<window.innerWidth/2 && piece.x>0){
-piece.x--;
-}else if(piece.x<COLS-1){
-piece.x++;
+if(touchX < window.innerWidth/2){
+moveLeft();
+}else{
+moveRight();
 }
 });
 
@@ -100,6 +126,8 @@ setInterval(()=>{
 moveDown();
 draw();
 },500);
+
+draw();
 </script>
 
 </body>
