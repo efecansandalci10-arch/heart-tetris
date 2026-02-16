@@ -34,12 +34,48 @@ resize();
 window.addEventListener("resize", resize);
 
 /* ---------------- MODLAR ---------------- */
-let mode = "hearts"; // direkt kalplerle başlayalım
-let hearts = [];
+let mode = "intro";
+
+/* ---------------- INTRO ANIMASYONU ---------------- */
+let y = -100;
+let velocity = 2;
+let gravity = 0.4;
+let bounce = 0.7;
+let introFinished = false;
+
+function drawIntro(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let fontSize = Math.min(canvas.width/5,100);
+  ctx.font = "bold "+fontSize+"px Arial";
+  ctx.textAlign = "center";
+  ctx.shadowColor = "#ff2e88";
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = "#ff4e8a";
+  ctx.fillText("❤️ŞEVVAL❤️",canvas.width/2,y);
+}
+
+function updateIntro(){
+  velocity += gravity;
+  y += velocity;
+  let fontSize = Math.min(canvas.width/5,100);
+  if(y > canvas.height-fontSize){
+    y = canvas.height-fontSize;
+    velocity *= -bounce;
+    if(Math.abs(velocity) < 1.5 && !introFinished){
+      introFinished = true;
+      setTimeout(()=>{
+        mode="hearts"; // kalp animasyonuna geç
+      },500);
+    }
+  }
+  drawIntro();
+}
 
 /* ---------------- KALP ARKAPLAN ---------------- */
+let hearts = [];
 let heartCount = 0;
-const maxHearts = 200; // kaç kalp düşecek
+const maxHearts = 200;
+
 function spawnBackgroundHeart(){
   if(heartCount >= maxHearts) return;
   const x = Math.random() * canvas.width;
@@ -51,7 +87,6 @@ function spawnBackgroundHeart(){
 }
 
 function updateHearts(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
   spawnBackgroundHeart();
   hearts.forEach(h=>{
     h.y += h.speed;
@@ -59,7 +94,6 @@ function updateHearts(){
   });
 }
 
-/* ---------------- ÇİZME ---------------- */
 function drawHeart(x,y,size){
   ctx.font = size + "px Arial";
   ctx.textAlign = "center";
@@ -73,7 +107,7 @@ function drawHeart(x,y,size){
 let message = "Seni her şeyden çok seviyorum, beni sevdiğin için çok şanslıyım bazen imbécile olsam da benden bıkmadığın için de çok şanslıyım seni mutlu etmek ve beraber mutlu olmak için elimden gelenin fazlasını yapacağım. Birlikte nice sevgililer günlerine :)";
 let displayed = "";
 let charIndex = 0;
-let messageSpeed = 3; // frame başına karakter
+let messageSpeed = 3;
 let frameCount = 0;
 let messageStarted = false;
 
@@ -92,17 +126,23 @@ function updateMessage(){
 
 /* ---------------- LOOP ---------------- */
 function loop(){
-  if(mode === "hearts"){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(mode==="intro"){
+    updateIntro();
+  } 
+  else if(mode==="hearts"){
     updateHearts();
-    // bütün kalpler ekrana gelince mesaj başlasın
     if(heartCount >= maxHearts && !messageStarted){
       messageStarted = true;
-      setTimeout(()=>{mode="message";}, 1000);
+      setTimeout(()=>{mode="message";},1000);
     }
-  } else if(mode === "message"){
-    updateHearts(); // kalpler arkada düşmeye devam etsin
+  }
+  else if(mode==="message"){
+    updateHearts(); // kalpler arka planda düşmeye devam etsin
     updateMessage();
   }
+
   requestAnimationFrame(loop);
 }
 loop();
