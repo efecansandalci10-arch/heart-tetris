@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>❤️ŞEVVAL❤️</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -14,13 +13,10 @@ body{
   display:flex;
   justify-content:center;
   align-items:center;
-  padding-bottom:env(safe-area-inset-bottom);
-  padding-top:env(safe-area-inset-top);
   font-family:Arial, sans-serif;
 }
 canvas{
   display:block;
-  touch-action:none;
 }
 </style>
 </head>
@@ -55,7 +51,7 @@ function drawIntro(){
   ctx.shadowColor="#ff2e88";
   ctx.shadowBlur=30;
   ctx.fillStyle="#ff4e8a";
-  ctx.fillText("SEVVAL ❤️",canvas.width/2,y);
+  ctx.fillText("❤️ŞEVVAL❤️",canvas.width/2,y);
 }
 
 function updateIntro(){
@@ -111,24 +107,15 @@ function createTargets(text){
 function spawnHeart(){
   if(dropIndex>=targets.length) return;
   let t=targets[dropIndex];
-  hearts.push({
-    x:t.x,
-    y:-20,
-    targetY:t.y,
-    speed:5
-  });
+  hearts.push({x:t.x,y:-20,targetY:t.y,speed:5});
   dropIndex++;
 }
 
 function updateHearts(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(dropIndex<targets.length){
-    spawnHeart();
-  }
+  if(dropIndex<targets.length) spawnHeart();
   hearts.forEach(h=>{
-    if(h.y<h.targetY){
-      h.y+=h.speed;
-    }
+    if(h.y<h.targetY) h.y+=h.speed;
     drawHeart(h.x,h.y);
   });
 }
@@ -142,118 +129,48 @@ function drawHeart(x,y){
   ctx.fillText("❤️",x,y);
 }
 
-/* ---------------- TETRIS ---------------- */
-const scale = 30;
-let arena = [];
-const tetrominoShapes = [
-  [[1,1,1,1]],       // I
-  [[1,1],[1,1]],     // O
-  [[0,1,0],[1,1,1]], // T
-  [[1,0,0],[1,1,1]], // L
-  [[0,0,1],[1,1,1]], // J
-  [[1,1,0],[0,1,1]], // S
-  [[0,1,1],[1,1,0]]  // Z
-];
+/* ---------------- MESSAGE MODE ---------------- */
+let message = "";
+let displayed = "";
+let charIndex = 0;
+let messageSpeed = 2; // karakter başına frame sayısı
+let frameCount = 0;
 
-function createMatrix(w,h){
-  const matrix=[];
-  while(h--) matrix.push(new Array(w).fill(''));
-  return matrix;
+function setMessage(msg){
+  message = msg;
+  displayed = "";
+  charIndex = 0;
+  frameCount = 0;
 }
 
-function convertToHearts(shape){
-  return shape.map(row=>row.map(cell=>{
-    if(cell){
-      // 50% ihtimalle 1, 30% 2, 20% 3 kalp
-      const n = Math.random();
-      if(n<0.5) return '❤️';
-      else if(n<0.8) return '❤️❤️';
-      else return '❤️❤️❤️';
-    }else return '';
-  }));
-}
-
-let player = {pos:{x:0,y:0}, matrix:null};
-
-function playerReset(){
-  const rand = Math.floor(Math.random()*tetrominoShapes.length);
-  player.matrix = convertToHearts(tetrominoShapes[rand]);
-  player.pos.y=0;
-  player.pos.x=Math.floor(arena[0].length/2)-Math.floor(player.matrix[0].length/2);
-}
-
-function collide(arena,player){
-  const m=player.matrix;
-  const o=player.pos;
-  for(let y=0;y<m.length;y++){
-    for(let x=0;x<m[y].length;x++){
-      if(m[y][x]!=='' && (arena[y+o.y] && arena[y+o.y][x+o.x])!==''){
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function merge(arena,player){
-  player.matrix.forEach((row,y)=>{
-    row.forEach((value,x)=>{
-      if(value!==''){
-        arena[y+player.pos.y][x+player.pos.x]=value;
-      }
-    });
-  });
-}
-
-function playerDrop(){
-  player.pos.y++;
-  if(collide(arena,player)){
-    player.pos.y--;
-    merge(arena,player);
-    playerReset();
-  }
-}
-
-function drawMatrix(matrix,offset){
-  matrix.forEach((row,y)=>{
-    row.forEach((value,x)=>{
-      if(value!==''){
-        ctx.font=scale+"px Arial";
-        ctx.textAlign="center";
-        ctx.fillStyle='red';
-        ctx.fillText(value,(x+0.5+offset.x)*scale,(y+0.8+offset.y)*scale);
-      }
-    });
-  });
-}
-
-function initTetris(){
-  arena=createMatrix(10,20);
-  playerReset();
-}
-
-function updateTetris(){
+function updateMessage(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  playerDrop();
-  drawMatrix(arena,{x:0,y:0});
-  drawMatrix(player.matrix,player.pos);
+  frameCount++;
+  if(charIndex < message.length && frameCount % messageSpeed === 0){
+    displayed += message[charIndex];
+    charIndex++;
+  }
+  let fontSize = Math.min(canvas.width/15, 60);
+  ctx.font = "bold "+fontSize+"px Arial";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ff4e8a";
+  ctx.fillText(displayed, canvas.width/2, canvas.height/2);
 }
 
-/* ---------------- MAIN LOOP ---------------- */
+/* ---------------- LOOP ---------------- */
 function loop(){
   if(mode==="intro"){
     updateIntro();
   } else if(mode==="hearts"){
     updateHearts();
     if(dropIndex>=targets.length){
-      // 1 saniye sonra Tetris başlasın
       setTimeout(()=>{
-        mode="tetris";
-        initTetris();
+        mode="message";
+        setMessage("Buraya yavaş yavaş çıkacak mesajı yazabilirsin :)");
       },1000);
     }
-  } else if(mode==="tetris"){
-    updateTetris();
+  } else if(mode==="message"){
+    updateMessage();
   }
   requestAnimationFrame(loop);
 }
