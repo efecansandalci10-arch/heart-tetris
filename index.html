@@ -4,47 +4,43 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>❤️ŞEVVAL❤️</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-
 body{
-background:#0f0f0f;
-height:100dvh;
-width:100vw;
-overflow:hidden;
-display:flex;
-justify-content:center;
-align-items:center;
-padding-bottom:env(safe-area-inset-bottom);
-padding-top:env(safe-area-inset-top);
-font-family:Arial, sans-serif;
+  background:#0f0f0f;
+  height:100dvh;
+  width:100vw;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding-bottom:env(safe-area-inset-bottom);
+  padding-top:env(safe-area-inset-top);
+  font-family:Arial, sans-serif;
 }
-
 canvas{
-display:block;
-touch-action:none;
+  display:block;
+  touch-action:none;
 }
 </style>
 </head>
-
 <body>
 <canvas id="canvas"></canvas>
-
 <script>
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 
 function resize(){
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
 }
 resize();
 window.addEventListener("resize",resize);
 
-/* ---------------- INTRO ---------------- */
-
+/* ---------------- MODLAR ---------------- */
 let mode="intro";
+
+/* ---------------- INTRO ---------------- */
 let y=-100;
 let velocity=2;
 let gravity=0.4;
@@ -52,133 +48,214 @@ let bounce=0.7;
 let introFinished=false;
 
 function drawIntro(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-let fontSize=Math.min(canvas.width/5,100);
-ctx.font="bold "+fontSize+"px Arial";
-ctx.textAlign="center";
-ctx.shadowColor="#ff2e88";
-ctx.shadowBlur=30;
-ctx.fillStyle="#ff4e8a";
-ctx.fillText("SEVVAL ❤️",canvas.width/2,y);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let fontSize=Math.min(canvas.width/5,100);
+  ctx.font="bold "+fontSize+"px Arial";
+  ctx.textAlign="center";
+  ctx.shadowColor="#ff2e88";
+  ctx.shadowBlur=30;
+  ctx.fillStyle="#ff4e8a";
+  ctx.fillText("SEVVAL ❤️",canvas.width/2,y);
 }
 
 function updateIntro(){
-velocity+=gravity;
-y+=velocity;
-
-let fontSize=Math.min(canvas.width/5,100);
-
-if(y>canvas.height-fontSize){
-y=canvas.height-fontSize;
-velocity*=-bounce;
-
-if(Math.abs(velocity)<1.5 && !introFinished){
-introFinished=true;
-setTimeout(()=>{
-mode="hearts";
-initHearts();
-},1200);
-}
-}
-
-drawIntro();
-requestAnimationFrame(loop);
+  velocity+=gravity;
+  y+=velocity;
+  let fontSize=Math.min(canvas.width/5,100);
+  if(y>canvas.height-fontSize){
+    y=canvas.height-fontSize;
+    velocity*=-bounce;
+    if(Math.abs(velocity)<1.5 && !introFinished){
+      introFinished=true;
+      setTimeout(()=>{
+        mode="hearts";
+        initHearts();
+      },1200);
+    }
+  }
+  drawIntro();
 }
 
-/* ---------------- HEART TEXT MODE ---------------- */
-
+/* ---------------- HEART TEXT ---------------- */
 let hearts=[];
 let targets=[];
 let gridSize;
 let dropIndex=0;
 
 function initHearts(){
-
-gridSize=Math.max(14, Math.floor(canvas.width/40));
-
-createTargets("Je t'aime ma chérie");
+  gridSize=Math.max(14, Math.floor(canvas.width/40));
+  createTargets("Je t'aime ma chérie");
 }
 
 function createTargets(text){
-
-targets=[];
-hearts=[];
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-let fontSize=Math.min(canvas.width/9,90);
-
-ctx.font="bold "+fontSize+"px Arial";
-ctx.textAlign="center";
-ctx.fillStyle="white";
-ctx.fillText(text,canvas.width/2,canvas.height/2);
-
-let data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-
-for(let y=0;y<canvas.height;y+=gridSize){
-for(let x=0;x<canvas.width;x+=gridSize){
-
-let index=(y*canvas.width+x)*4;
-if(data[index+3]>128){
-targets.push({x:x,y:y});
-}
-}
-}
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
+  targets=[];
+  hearts=[];
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let fontSize=Math.min(canvas.width/9,90);
+  ctx.font="bold "+fontSize+"px Arial";
+  ctx.textAlign="center";
+  ctx.fillStyle="white";
+  ctx.fillText(text,canvas.width/2,canvas.height/2);
+  let data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  for(let y=0;y<canvas.height;y+=gridSize){
+    for(let x=0;x<canvas.width;x+=gridSize){
+      let index=(y*canvas.width+x)*4;
+      if(data[index+3]>128){
+        targets.push({x:x,y:y});
+      }
+    }
+  }
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
 function spawnHeart(){
-if(dropIndex>=targets.length) return;
-
-let t=targets[dropIndex];
-
-hearts.push({
-x:t.x,
-y:-20,
-targetY:t.y,
-speed:5
-});
-
-dropIndex++;
+  if(dropIndex>=targets.length) return;
+  let t=targets[dropIndex];
+  hearts.push({
+    x:t.x,
+    y:-20,
+    targetY:t.y,
+    speed:5
+  });
+  dropIndex++;
 }
 
 function updateHearts(){
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-if(dropIndex<targets.length){
-spawnHeart();
-}
-
-hearts.forEach(h=>{
-if(h.y<h.targetY){
-h.y+=h.speed;
-}
-drawHeart(h.x,h.y);
-});
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(dropIndex<targets.length){
+    spawnHeart();
+  }
+  hearts.forEach(h=>{
+    if(h.y<h.targetY){
+      h.y+=h.speed;
+    }
+    drawHeart(h.x,h.y);
+  });
 }
 
 function drawHeart(x,y){
-ctx.font=gridSize+"px Arial";
-ctx.textAlign="center";
-ctx.shadowColor="#ff2e88";
-ctx.shadowBlur=12;
-ctx.fillStyle="#ff4e8a";
-ctx.fillText("❤️",x,y);
+  ctx.font=gridSize+"px Arial";
+  ctx.textAlign="center";
+  ctx.shadowColor="#ff2e88";
+  ctx.shadowBlur=12;
+  ctx.fillStyle="#ff4e8a";
+  ctx.fillText("❤️",x,y);
 }
 
-/* ---------------- LOOP ---------------- */
+/* ---------------- TETRIS ---------------- */
+const scale = 30;
+let arena = [];
+const tetrominoShapes = [
+  [[1,1,1,1]],       // I
+  [[1,1],[1,1]],     // O
+  [[0,1,0],[1,1,1]], // T
+  [[1,0,0],[1,1,1]], // L
+  [[0,0,1],[1,1,1]], // J
+  [[1,1,0],[0,1,1]], // S
+  [[0,1,1],[1,1,0]]  // Z
+];
 
+function createMatrix(w,h){
+  const matrix=[];
+  while(h--) matrix.push(new Array(w).fill(''));
+  return matrix;
+}
+
+function convertToHearts(shape){
+  return shape.map(row=>row.map(cell=>{
+    if(cell){
+      // 50% ihtimalle 1, 30% 2, 20% 3 kalp
+      const n = Math.random();
+      if(n<0.5) return '❤️';
+      else if(n<0.8) return '❤️❤️';
+      else return '❤️❤️❤️';
+    }else return '';
+  }));
+}
+
+let player = {pos:{x:0,y:0}, matrix:null};
+
+function playerReset(){
+  const rand = Math.floor(Math.random()*tetrominoShapes.length);
+  player.matrix = convertToHearts(tetrominoShapes[rand]);
+  player.pos.y=0;
+  player.pos.x=Math.floor(arena[0].length/2)-Math.floor(player.matrix[0].length/2);
+}
+
+function collide(arena,player){
+  const m=player.matrix;
+  const o=player.pos;
+  for(let y=0;y<m.length;y++){
+    for(let x=0;x<m[y].length;x++){
+      if(m[y][x]!=='' && (arena[y+o.y] && arena[y+o.y][x+o.x])!==''){
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function merge(arena,player){
+  player.matrix.forEach((row,y)=>{
+    row.forEach((value,x)=>{
+      if(value!==''){
+        arena[y+player.pos.y][x+player.pos.x]=value;
+      }
+    });
+  });
+}
+
+function playerDrop(){
+  player.pos.y++;
+  if(collide(arena,player)){
+    player.pos.y--;
+    merge(arena,player);
+    playerReset();
+  }
+}
+
+function drawMatrix(matrix,offset){
+  matrix.forEach((row,y)=>{
+    row.forEach((value,x)=>{
+      if(value!==''){
+        ctx.font=scale+"px Arial";
+        ctx.textAlign="center";
+        ctx.fillStyle='red';
+        ctx.fillText(value,(x+0.5+offset.x)*scale,(y+0.8+offset.y)*scale);
+      }
+    });
+  });
+}
+
+function initTetris(){
+  arena=createMatrix(10,20);
+  playerReset();
+}
+
+function updateTetris(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  playerDrop();
+  drawMatrix(arena,{x:0,y:0});
+  drawMatrix(player.matrix,player.pos);
+}
+
+/* ---------------- MAIN LOOP ---------------- */
 function loop(){
-if(mode==="intro"){
-updateIntro();
-}else{
-updateHearts();
-requestAnimationFrame(loop);
-return;
-}
+  if(mode==="intro"){
+    updateIntro();
+  } else if(mode==="hearts"){
+    updateHearts();
+    if(dropIndex>=targets.length){
+      // 1 saniye sonra Tetris başlasın
+      setTimeout(()=>{
+        mode="tetris";
+        initTetris();
+      },1000);
+    }
+  } else if(mode==="tetris"){
+    updateTetris();
+  }
+  requestAnimationFrame(loop);
 }
 loop();
 </script>
