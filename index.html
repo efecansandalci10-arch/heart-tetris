@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEVVAL ❤️ Tetris</title>
+<title>SEVVAL ❤️</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -18,6 +18,7 @@ justify-content:center;
 align-items:center;
 padding-bottom:env(safe-area-inset-bottom);
 padding-top:env(safe-area-inset-top);
+font-family:Arial, sans-serif;
 }
 
 canvas{
@@ -28,19 +29,18 @@ touch-action:none;
 </head>
 
 <body>
-
 <canvas id="canvas"></canvas>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
 function resize(){
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 }
 resize();
-window.addEventListener("resize", resize);
+window.addEventListener("resize",resize);
 
 /* ---------------- INTRO ---------------- */
 
@@ -54,31 +54,30 @@ let introFinished=false;
 function drawIntro(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
-let fontSize = Math.min(canvas.width/5,100);
+let fontSize=Math.min(canvas.width/5,100);
 ctx.font="bold "+fontSize+"px Arial";
 ctx.textAlign="center";
 ctx.shadowColor="#ff2e88";
 ctx.shadowBlur=30;
 ctx.fillStyle="#ff4e8a";
-
-ctx.fillText("SEVVAL ❤️", canvas.width/2, y);
+ctx.fillText("SEVVAL ❤️",canvas.width/2,y);
 }
 
 function updateIntro(){
 velocity+=gravity;
 y+=velocity;
 
-let fontSize = Math.min(canvas.width/5,100);
+let fontSize=Math.min(canvas.width/5,100);
 
-if(y > canvas.height - fontSize){
-y = canvas.height - fontSize;
-velocity *= -bounce;
+if(y>canvas.height-fontSize){
+y=canvas.height-fontSize;
+velocity*=-bounce;
 
 if(Math.abs(velocity)<1.5 && !introFinished){
 introFinished=true;
 setTimeout(()=>{
-mode="tetris";
-initTetris();
+mode="hearts";
+initHearts();
 },1200);
 }
 }
@@ -87,102 +86,91 @@ drawIntro();
 requestAnimationFrame(loop);
 }
 
-/* ---------------- TETRIS ---------------- */
+/* ---------------- HEART BUILD MODE ---------------- */
 
-let COLS=10;
-let ROWS=20;
-let SIZE;
-let board;
-let piece;
+let hearts=[];
+let gridSize;
+let targetShape=[];
+let dropInterval=300;
+let lastDrop=0;
 
-function initTetris(){
-board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
-resizeTetris();
-spawn();
+function initHearts(){
+gridSize=Math.floor(canvas.width/20);
+
+createHeartShape();
 }
 
-function resizeTetris(){
-SIZE = Math.floor(canvas.width / COLS);
-canvas.height = SIZE * ROWS;
+function createHeartShape(){
+let cols=15;
+let rows=13;
+
+for(let r=0;r<rows;r++){
+for(let c=0;c<cols;c++){
+
+let x=c-cols/2;
+let y=r-rows/3;
+
+if((x*x+y*y-1)**3 - x*x*y*y*y <=0){
+targetShape.push({
+x:c,
+y:r
+});
+}
+}
+}
 }
 
-function spawn(){
-piece={
-x:Math.floor(COLS/2),
-y:0
-};
+function spawnHeart(){
+if(targetShape.length===0) return;
+
+let next=targetShape.shift();
+
+hearts.push({
+x:canvas.width/2 - (7*gridSize) + next.x*gridSize,
+y:-20,
+targetY:canvas.height - (13-next.y)*gridSize,
+speed:4
+});
+}
+
+function updateHearts(timestamp){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+if(timestamp-lastDrop>dropInterval){
+spawnHeart();
+lastDrop=timestamp;
+}
+
+hearts.forEach(h=>{
+if(h.y<h.targetY){
+h.y+=h.speed;
+}
+drawHeart(h.x,h.y);
+});
+
+requestAnimationFrame(loop);
 }
 
 function drawHeart(x,y){
-ctx.font=(SIZE-4)+"px Arial";
-ctx.fillText("❤️",x*SIZE+2,y*SIZE+SIZE-4);
+ctx.font=(gridSize)+"px Arial";
+ctx.textAlign="center";
+ctx.shadowColor="#ff2e88";
+ctx.shadowBlur=15;
+ctx.fillStyle="#ff4e8a";
+ctx.fillText("❤️",x,y);
 }
-
-function drawTetris(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-board.forEach((row,y)=>{
-row.forEach((v,x)=>{
-if(v) drawHeart(x,y);
-});
-});
-
-drawHeart(piece.x,piece.y);
-}
-
-function moveDown(){
-piece.y++;
-if(piece.y>=ROWS){
-board[piece.y-1][piece.x]=1;
-spawn();
-}
-}
-
-function moveLeft(){
-if(piece.x>0) piece.x--;
-}
-
-function moveRight(){
-if(piece.x<COLS-1) piece.x++;
-}
-
-/* -------- TOUCH FIX (iPhone optimized) -------- */
-
-canvas.addEventListener("touchstart",e=>{
-let rect=canvas.getBoundingClientRect();
-let touchX=e.touches[0].clientX-rect.left;
-
-if(touchX < canvas.width/3){
-moveLeft();
-}else if(touchX > canvas.width*2/3){
-moveRight();
-}else{
-moveDown();
-}
-});
-
-/* Masaüstü */
-document.addEventListener("keydown",e=>{
-if(mode!=="tetris") return;
-if(e.key==="ArrowLeft") moveLeft();
-if(e.key==="ArrowRight") moveRight();
-if(e.key==="ArrowDown") moveDown();
-});
 
 /* ---------------- LOOP ---------------- */
 
-function loop(){
+function loop(timestamp){
 if(mode==="intro"){
 updateIntro();
 }else{
-moveDown();
-drawTetris();
-setTimeout(()=>requestAnimationFrame(loop),500);
-return;
+updateHearts(timestamp||0);
 }
 }
+
 loop();
 </script>
-
 </body>
 </html>
