@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEVVAL ❤️</title>
+<title>❤️ŞEVVAL❤️</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -91,68 +91,65 @@ requestAnimationFrame(loop);
 let hearts=[];
 let targets=[];
 let gridSize;
-let lastDrop=0;
-let dropInterval=80;
+let dropIndex=0;
 
 function initHearts(){
 
-gridSize=Math.max(12, Math.floor(canvas.width/45));
+gridSize=Math.max(14, Math.floor(canvas.width/40));
 
-createTextShape("Je t'aime ma chérie");
+createTargets("Je t'aime ma chérie");
 }
 
-function createTextShape(text){
+function createTargets(text){
 
-let offCanvas=document.createElement("canvas");
-let offCtx=offCanvas.getContext("2d");
+targets=[];
+hearts=[];
 
-offCanvas.width=canvas.width;
-offCanvas.height=canvas.height;
+ctx.clearRect(0,0,canvas.width,canvas.height);
 
-let fontSize=Math.min(canvas.width/10,80);
+let fontSize=Math.min(canvas.width/9,90);
 
-offCtx.fillStyle="white";
-offCtx.textAlign="center";
-offCtx.font="bold "+fontSize+"px Arial";
-offCtx.fillText(text,offCanvas.width/2,offCanvas.height/2);
+ctx.font="bold "+fontSize+"px Arial";
+ctx.textAlign="center";
+ctx.fillStyle="white";
+ctx.fillText(text,canvas.width/2,canvas.height/2);
 
-let imageData=offCtx.getImageData(0,0,offCanvas.width,offCanvas.height).data;
+let data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
 
-for(let y=0;y<offCanvas.height;y+=gridSize){
-for(let x=0;x<offCanvas.width;x+=gridSize){
+for(let y=0;y<canvas.height;y+=gridSize){
+for(let x=0;x<canvas.width;x+=gridSize){
 
-let index=(y*offCanvas.width+x)*4;
-
-if(imageData[index+3]>128){
-targets.push({
-x:x,
-y:y
-});
+let index=(y*canvas.width+x)*4;
+if(data[index+3]>128){
+targets.push({x:x,y:y});
 }
 }
 }
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
 function spawnHeart(){
-if(targets.length===0) return;
+if(dropIndex>=targets.length) return;
 
-let t=targets.shift();
+let t=targets[dropIndex];
 
 hearts.push({
 x:t.x,
 y:-20,
 targetY:t.y,
-speed:4
+speed:5
 });
+
+dropIndex++;
 }
 
-function updateHearts(timestamp){
+function updateHearts(){
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
-if(timestamp-lastDrop>dropInterval){
+if(dropIndex<targets.length){
 spawnHeart();
-lastDrop=timestamp;
 }
 
 hearts.forEach(h=>{
@@ -161,29 +158,28 @@ h.y+=h.speed;
 }
 drawHeart(h.x,h.y);
 });
-
-requestAnimationFrame(loop);
 }
 
 function drawHeart(x,y){
 ctx.font=gridSize+"px Arial";
 ctx.textAlign="center";
 ctx.shadowColor="#ff2e88";
-ctx.shadowBlur=15;
+ctx.shadowBlur=12;
 ctx.fillStyle="#ff4e8a";
 ctx.fillText("❤️",x,y);
 }
 
 /* ---------------- LOOP ---------------- */
 
-function loop(timestamp){
+function loop(){
 if(mode==="intro"){
 updateIntro();
 }else{
-updateHearts(timestamp||0);
+updateHearts();
+requestAnimationFrame(loop);
+return;
 }
 }
-
 loop();
 </script>
 </body>
