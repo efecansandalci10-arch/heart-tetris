@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>💖 AşkımTetris 💖</title>
+    <title>💖 Romantik Tetris 💖</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -15,6 +15,7 @@
         body {
             height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             font-family: 'Arial', sans-serif;
@@ -49,6 +50,22 @@
             box-shadow: 0 0 25px #ff2e88;
         }
 
+        /* Mobil kontrolleri */
+        .controls {
+            display: none;
+            margin-top: 10px;
+            gap: 10px;
+        }
+
+        .controls button {
+            padding: 15px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff2e88, #ff4e8a);
+            color: white;
+        }
+
         .heart {
             position: absolute;
             font-size: 20px;
@@ -61,13 +78,31 @@
             50% { opacity: 1; }
             100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
         }
+
+        /* Responsive canvas */
+        @media (max-width: 768px) {
+            canvas {
+                width: 200px;
+                height: 400px;
+            }
+            .controls {
+                display: flex;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <h1>💖 AşkımTetris 💖</h1>
+    <h1>💖 Romantik Tetris 💖</h1>
     <button id="startBtn">Başlat</button>
     <canvas id="game" width="300" height="600"></canvas>
+
+    <div class="controls">
+        <button onclick="move(-1)">⬅️</button>
+        <button onclick="rotate()">🔄</button>
+        <button onclick="move(1)">➡️</button>
+        <button onclick="drop()">⬇️</button>
+    </div>
 
     <script>
         // Kayan kalpler
@@ -91,11 +126,9 @@
             clicks++;
 
             if (clicks < 4) {
-                // Rastgele pozisyon değiştir
                 startBtn.style.top = Math.random() * 80 + 'vh';
                 startBtn.style.left = Math.random() * 80 + 'vw';
             } else {
-                // 4. tıklamada gülücük emoji ve Tetris başlat
                 startBtn.textContent = '😄';
                 startBtn.style.top = '50%';
                 startBtn.style.left = '50%';
@@ -103,20 +136,36 @@
                 startBtn.onclick = () => {
                     startBtn.style.display = 'none';
                     document.getElementById('game').style.display = 'block';
+                    document.querySelector('.controls').style.display = 'flex';
                     startTetris();
                 };
             }
         });
 
         // -----------------------------
-        // Heart Tetris kodu (basitleştirilmiş)
+        // Tetris kodu
         // -----------------------------
         const canvas = document.getElementById("game");
         const ctx = canvas.getContext("2d");
 
-        const ROWS = 20;
-        const COLS = 10;
-        const SIZE = 30;
+        let ROWS = 20;
+        let COLS = 10;
+        let SIZE = 30;
+
+        // Responsive ayar: mobilde küçült
+        function updateSize() {
+            if (window.innerWidth <= 768) {
+                SIZE = 20;
+                ROWS = 20;
+                COLS = 10;
+            } else {
+                SIZE = 30;
+                ROWS = 20;
+                COLS = 10;
+            }
+        }
+        updateSize();
+        window.addEventListener('resize', updateSize);
 
         let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 
@@ -215,6 +264,8 @@
             newPiece();
             draw();
             setInterval(drop, 700);
+
+            // Keyboard controls
             document.addEventListener("keydown", e=>{
                 if(e.key==="ArrowLeft") move(-1);
                 if(e.key==="ArrowRight") move(1);
