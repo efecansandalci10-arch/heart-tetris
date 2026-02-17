@@ -17,7 +17,7 @@
             background: linear-gradient(135deg, #ff9a9e, #fad0c4);
             overflow:hidden;
             position:relative;
-            touch-action: none; /* Dokunma zoomunu engelle */
+            touch-action: none; /* zoom engelle */
         }
         h1 {
             position:absolute;
@@ -36,6 +36,7 @@
             color:white;
             cursor:pointer;
             transition: all 0.3s ease;
+            z-index:5;
         }
         canvas {
             display:none;
@@ -65,25 +66,31 @@
 <canvas id="game" width="300" height="600"></canvas>
 
 <script>
-    // Kayan kalpler
+    // -----------------------------
+    // Başlangıç kalpleri ekran sınırlarına yay
+    // -----------------------------
     for(let i=0;i<30;i++){
         const heart=document.createElement('div');
         heart.classList.add('heart');
         heart.textContent='💖';
-        heart.style.left=Math.random()*100+'vw';
+        heart.style.left=Math.random()*100+'vw';  // ekran boyunca
+        heart.style.top=Math.random()*90+'vh';    // üst sınırdan biraz boşluk bırak
         heart.style.fontSize=15+Math.random()*25+'px';
         heart.style.animationDuration=5+Math.random()*10+'s';
         heart.style.animationDelay=Math.random()*5+'s';
         document.body.appendChild(heart);
     }
 
+    // -----------------------------
+    // Başlat butonu kovala
+    // -----------------------------
     const startBtn=document.getElementById('startBtn');
     let clicks=0;
     startBtn.addEventListener('click',()=>{
         clicks++;
         if(clicks<4){
-            startBtn.style.top=Math.random()*80+'vh';
-            startBtn.style.left=Math.random()*80+'vw';
+            startBtn.style.top=Math.random()*70+'vh';
+            startBtn.style.left=Math.random()*70+'vw';
         } else{
             startBtn.textContent='😄';
             startBtn.style.top='50%';
@@ -104,12 +111,14 @@
     const ctx=canvas.getContext("2d");
 
     let ROWS=20, COLS=10, SIZE=30;
+
     function updateSize(){
-        if(window.innerWidth<=768){ SIZE=20; ROWS=20; COLS=10; }
-        else{ SIZE=30; ROWS=20; COLS=10; }
+        if(window.innerWidth<=768){ 
+            SIZE=30; ROWS=20; COLS=10; // mantığı sabit bırak
+        } else{ SIZE=30; ROWS=20; COLS=10; }
     }
     updateSize();
-    window.addEventListener('resize', updateSize);
+    window.addEventListener('resize',updateSize);
 
     let board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
 
@@ -167,7 +176,7 @@
 
     function newPiece(){
         const shape=pieces[Math.floor(Math.random()*pieces.length)];
-        piece={shape,x:4,y:0};
+        piece={shape,x:4,y:0}; // başlangıç y=0, canvas küçültülse de mantık doğru
         if(collide()){
             alert("Oyun Bitti 💔");
             board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
@@ -212,7 +221,7 @@
                 if(e.key==="ArrowUp") rotate();
             });
         } else {
-            // Mobil dokunmatik kontrol
+            // Mobil dokunmatik
             let touchStartX=0, touchStartY=0;
             canvas.addEventListener("touchstart", e=>{
                 const touch=e.touches[0];
@@ -223,12 +232,21 @@
                 const touch=e.changedTouches[0];
                 const dx=touch.clientX - touchStartX;
                 const dy=touch.clientY - touchStartY;
-                if(Math.abs(dx)>Math.abs(dy)){
-                    if(dx>10) move(1);
-                    else if(dx<-10) move(-1);
+
+                if(Math.abs(dx) > Math.abs(dy)){
+                    if(dx>20) move(1);
+                    else if(dx<-20) move(-1);
                 } else {
-                    if(dy>10) drop();
-                    else if(dy<-10) rotate();
+                    if(dy<-20) rotate();
+                    else if(dy>20) {
+                        // Aşağı kaydırınca normal Tetris gibi blok anında düşer
+                        while(!collide()){ piece.y++; }
+                        piece.y--;
+                        merge();
+                        clearLines();
+                        newPiece();
+                        draw();
+                    }
                 }
             });
         }
