@@ -1,62 +1,234 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 
 <head>
-    <meta charset="UTF-8">
-    <title>💖 Heart Tetris 💖</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>💖 Heart Tetris 💖</title>
 
-        body {
-            background: linear-gradient(180deg, #1a0015, #000);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            color: white;
-            overflow: hidden;
-        }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        h1 {
-            margin-bottom: 10px;
-            color: #ff4e8a;
-            text-shadow: 0 0 15px #ff2e88;
-        }
+body {
+    background: linear-gradient(180deg, #1a0015, #000);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    color: white;
+    overflow: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
 
-        canvas {
-            background: #111;
-            box-shadow: 0 0 25px #ff2e88;
-        }
+h1 {
+    margin-bottom: 10px;
+    color: #ff4e8a;
+    text-shadow: 0 0 15px #ff2e88;
+    font-size: clamp(20px, 4vw, 28px);
+}
 
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            gap: 15px;
-        }
+.game-wrapper {
+    width: min(90vw, 400px);
+    aspect-ratio: 1 / 2;
+    position: relative;
+}
 
-        button {
-            padding: 15px 20px;
-            font-size: 20px;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(45deg, #ff2e88, #ff4e8a);
-            color: white;
-        }
-    </style>
+canvas {
+    width: 100%;
+    height: 100%;
+    background: #111;
+    border-radius: 20px;
+    box-shadow: 0 0 25px #ff2e88;
+}
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 15px 20px;
+    font-size: 22px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(45deg, #ff2e88, #ff4e8a);
+    color: white;
+    min-width: 60px;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+</style>
 </head>
 
 <body>
-    <h1>💖 Heart Tetris 💖</h1> <canvas id="game" width="300" height="600"></canvas>
-    <div class="controls"> <button onclick="move(-1)">⬅️</button> <button onclick="rotate()">🔄</button> <button
-            onclick="move(1)">➡️</button> <button onclick="drop()">⬇️</button> </div>
-    <script> const canvas = document.getElementById("game"); const ctx = canvas.getContext("2d"); const ROWS = 20; const COLS = 10; const SIZE = 30; let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0)); const heart = [[1, 1, 0], [1, 1, 1]]; let piece = { shape: heart, x: 4, y: 0 }; function drawCell(x, y) { ctx.fillStyle = "#ff4e8a"; ctx.shadowColor = "#ff2e88"; ctx.shadowBlur = 10; ctx.fillText("💖", x * SIZE + SIZE / 2, y * SIZE + SIZE / 1.3); } function draw() { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.font = "20px Arial"; ctx.textAlign = "center"; for (let r = 0; r < ROWS; r++) { for (let c = 0; c < COLS; c++) { if (board[r][c]) drawCell(c, r); } } piece.shape.forEach((row, r) => { row.forEach((val, c) => { if (val) drawCell(piece.x + c, piece.y + r); }); }); } function collide() { for (let r = 0; r < piece.shape.length; r++) { for (let c = 0; c < piece.shape[r].length; c++) { if (piece.shape[r][c]) { let newX = piece.x + c; let newY = piece.y + r; if (newX < 0 || newX >= COLS || newY >= ROWS || board[newY][newX]) { return true; } } } } return false; } function merge() { piece.shape.forEach((row, r) => { row.forEach((val, c) => { if (val) { board[piece.y + r][piece.x + c] = 1; } }); }); } function clearLines() { board = board.filter(row => row.some(cell => !cell)); while (board.length < ROWS) { board.unshift(Array(COLS).fill(0)); } } function newPiece() { piece = { shape: heart, x: 4, y: 0 }; } function move(dir) { piece.x += dir; if (collide()) piece.x -= dir; draw(); } function rotate() { piece.shape = piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse()); if (collide()) rotate(); draw(); } function drop() { piece.y++; if (collide()) { piece.y--; merge(); clearLines(); newPiece(); } draw(); } function update() { drop(); } setInterval(update, 700); draw(); </script>
-</body>
 
+<h1>💖 Heart Tetris 💖</h1>
+
+<div class="game-wrapper">
+    <canvas id="game"></canvas>
+</div>
+
+<div class="controls">
+    <button onclick="move(-1)">⬅️</button>
+    <button onclick="rotate()">🔄</button>
+    <button onclick="move(1)">➡️</button>
+    <button onclick="drop()">⬇️</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const ROWS = 20;
+const COLS = 10;
+
+let SIZE;
+let board;
+let piece;
+
+const heart = [[1,1,0],[1,1,1]];
+
+function resizeCanvas() {
+    const wrapper = document.querySelector(".game-wrapper");
+    const rect = wrapper.getBoundingClientRect();
+
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    SIZE = rect.width / COLS;
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function initBoard() {
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+}
+
+function newPiece() {
+    piece = {
+        shape: heart,
+        x: Math.floor(COLS/2)-1,
+        y: 0
+    };
+}
+
+function drawCell(x,y) {
+    ctx.font = `${SIZE * 0.8}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("💖", x*SIZE + SIZE/2, y*SIZE + SIZE*0.85);
+}
+
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+            if(board[r][c]) drawCell(c,r);
+        }
+    }
+
+    piece.shape.forEach((row,r)=>{
+        row.forEach((val,c)=>{
+            if(val) drawCell(piece.x+c,piece.y+r);
+        });
+    });
+}
+
+function collide(){
+    for(let r=0;r<piece.shape.length;r++){
+        for(let c=0;c<piece.shape[r].length;c++){
+            if(piece.shape[r][c]){
+                let newX=piece.x+c;
+                let newY=piece.y+r;
+
+                if(newX<0 || newX>=COLS || newY>=ROWS || board[newY]?.[newX])
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+function merge(){
+    piece.shape.forEach((row,r)=>{
+        row.forEach((val,c)=>{
+            if(val){
+                board[piece.y+r][piece.x+c]=1;
+            }
+        });
+    });
+}
+
+function clearLines(){
+    board=board.filter(row=>row.some(cell=>!cell));
+    while(board.length<ROWS){
+        board.unshift(Array(COLS).fill(0));
+    }
+}
+
+function move(dir){
+    piece.x+=dir;
+    if(collide()) piece.x-=dir;
+    draw();
+}
+
+function rotate(){
+    const oldShape=piece.shape;
+    const rotated=piece.shape[0].map((_,i)=>
+        piece.shape.map(row=>row[i]).reverse()
+    );
+    piece.shape=rotated;
+    if(collide()) piece.shape=oldShape;
+    draw();
+}
+
+function drop(){
+    piece.y++;
+    if(collide()){
+        piece.y--;
+        merge();
+        clearLines();
+        newPiece();
+    }
+    draw();
+}
+
+document.addEventListener("keydown", e=>{
+    if(e.key==="ArrowLeft") move(-1);
+    if(e.key==="ArrowRight") move(1);
+    if(e.key==="ArrowDown") drop();
+    if(e.key==="ArrowUp") rotate();
+});
+
+function update(){
+    drop();
+}
+
+initBoard();
+newPiece();
+draw();
+setInterval(update,700);
+</script>
+
+</body>
 </html>
