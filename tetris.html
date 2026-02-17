@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>💖 Heart Tetris 💖</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
+
 body{
   background:linear-gradient(180deg,#1a0015,#000);
   display:flex;
@@ -13,6 +14,7 @@ body{
   align-items:center;
   justify-content:center;
   height:100vh;
+  padding-bottom:env(safe-area-inset-bottom);
   font-family:Arial, sans-serif;
   color:white;
   overflow:hidden;
@@ -22,11 +24,18 @@ h1{
   margin-bottom:10px;
   color:#ff4e8a;
   text-shadow:0 0 15px #ff2e88;
+  font-size:clamp(22px,6vw,32px);
+}
+
+#score{
+  margin-bottom:10px;
+  color:#ffc0da;
 }
 
 canvas{
   background:#111;
   box-shadow:0 0 25px #ff2e88;
+  border-radius:10px;
 }
 
 .controls{
@@ -36,8 +45,8 @@ canvas{
 }
 
 button{
-  padding:15px 20px;
-  font-size:20px;
+  padding:14px 18px;
+  font-size:18px;
   border:none;
   border-radius:50px;
   background:linear-gradient(45deg,#ff2e88,#ff4e8a);
@@ -48,7 +57,8 @@ button{
 <body>
 
 <h1>💖 Heart Tetris 💖</h1>
-<canvas id="game" width="300" height="600"></canvas>
+<div id="score">Score: 0</div>
+<canvas id="game"></canvas>
 
 <div class="controls">
   <button onclick="move(-1)">⬅️</button>
@@ -61,34 +71,47 @@ button{
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const ROWS = 20;
 const COLS = 10;
-const SIZE = 30;
+const ROWS = 20;
+let SIZE = Math.floor(window.innerWidth / 12);
+
+canvas.width = COLS * SIZE;
+canvas.height = ROWS * SIZE;
 
 let board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+let score = 0;
 
-const heart = [
-  [1,1,0],
-  [1,1,1]
+const shapes = [
+  [[1,1,1,1]],                    // I
+  [[1,1],[1,1]],                  // O
+  [[0,1,0],[1,1,1]],              // T
+  [[1,0,0],[1,1,1]],              // L
+  [[0,0,1],[1,1,1]],              // J
+  [[0,1,1],[1,1,0]],              // S
+  [[1,1,0],[0,1,1]]               // Z
 ];
 
+function randomShape(){
+  return shapes[Math.floor(Math.random()*shapes.length)];
+}
+
 let piece = {
-  shape: heart,
-  x: 4,
+  shape: randomShape(),
+  x: 3,
   y: 0
 };
 
 function drawCell(x,y){
   ctx.fillStyle="#ff4e8a";
   ctx.shadowColor="#ff2e88";
-  ctx.shadowBlur=10;
-  ctx.fillText("💖",x*SIZE+SIZE/2,y*SIZE+SIZE/1.3);
+  ctx.shadowBlur=8;
+  ctx.font = (SIZE-6)+"px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("💖",x*SIZE+SIZE/2,y*SIZE+SIZE/1.2);
 }
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.font="20px Arial";
-  ctx.textAlign="center";
 
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
@@ -109,7 +132,7 @@ function collide(){
       if(piece.shape[r][c]){
         let newX = piece.x + c;
         let newY = piece.y + r;
-        if(newX<0||newX>=COLS||newY>=ROWS||board[newY][newX]){
+        if(newX<0||newX>=COLS||newY>=ROWS||board[newY]?.[newX]){
           return true;
         }
       }
@@ -129,18 +152,37 @@ function merge(){
 }
 
 function clearLines(){
-  board = board.filter(row=>row.some(cell=>!cell));
+  let lines = 0;
+  board = board.filter(row=>{
+    if(row.every(cell=>cell)){
+      lines++;
+      return false;
+    }
+    return true;
+  });
+
   while(board.length<ROWS){
     board.unshift(Array(COLS).fill(0));
+  }
+
+  if(lines){
+    score += lines*10;
+    document.getElementById("score").innerText="Score: "+score;
   }
 }
 
 function newPiece(){
   piece={
-    shape: heart,
-    x:4,
+    shape: randomShape(),
+    x:3,
     y:0
   };
+  if(collide()){
+    alert("💔 Game Over 💔");
+    board = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+    score=0;
+    document.getElementById("score").innerText="Score: 0";
+  }
 }
 
 function move(dir){
@@ -150,10 +192,11 @@ function move(dir){
 }
 
 function rotate(){
+  const old = piece.shape;
   piece.shape = piece.shape[0].map((_,i)=>
     piece.shape.map(row=>row[i]).reverse()
   );
-  if(collide()) rotate();
+  if(collide()) piece.shape = old;
   draw();
 }
 
@@ -172,7 +215,7 @@ function update(){
   drop();
 }
 
-setInterval(update,700);
+setInterval(update,600);
 draw();
 </script>
 
