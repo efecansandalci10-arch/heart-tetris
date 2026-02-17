@@ -4,276 +4,235 @@
 <head>
     <meta charset="UTF-8">
     <title>💖 Romantik Tetris 💖</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Arial', sans-serif;
+            height:100vh;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            font-family:'Arial', sans-serif;
             background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-            overflow: hidden;
-            position: relative;
+            overflow:hidden;
+            position:relative;
+            touch-action: none; /* Dokunma zoomunu engelle */
         }
-
         h1 {
-            position: absolute;
-            top: 5%;
-            font-size: 2.5rem;
-            color: white;
-            text-shadow: 0 0 10px #ff4e8a, 0 0 20px #ff2e88;
+            position:absolute;
+            top:5%;
+            font-size:2.5rem;
+            color:white;
+            text-shadow:0 0 10px #ff4e8a,0 0 20px #ff2e88;
         }
-
         #startBtn {
-            position: absolute;
-            padding: 20px 30px;
-            font-size: 1.5rem;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(45deg, #ff2e88, #ff4e8a);
-            color: white;
-            cursor: pointer;
+            position:absolute;
+            padding:20px 30px;
+            font-size:1.5rem;
+            border:none;
+            border-radius:50px;
+            background:linear-gradient(45deg, #ff2e88, #ff4e8a);
+            color:white;
+            cursor:pointer;
             transition: all 0.3s ease;
         }
-
         canvas {
-            display: none;
-            background: #111;
-            box-shadow: 0 0 25px #ff2e88;
+            display:none;
+            background:#111;
+            box-shadow:0 0 25px #ff2e88;
         }
-
-        /* Mobil kontrolleri */
-        .controls {
-            display: none;
-            margin-top: 10px;
-            gap: 10px;
-        }
-
-        .controls button {
-            padding: 15px 20px;
-            font-size: 18px;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(45deg, #ff2e88, #ff4e8a);
-            color: white;
-        }
-
         .heart {
-            position: absolute;
-            font-size: 20px;
-            color: rgba(255, 46, 136, 0.7);
+            position:absolute;
+            font-size:20px;
+            color:rgba(255,46,136,0.7);
             animation: float linear infinite;
         }
-
         @keyframes float {
-            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+            0% {transform: translateY(100vh) rotate(0deg); opacity:0;}
+            50% {opacity:1;}
+            100% {transform: translateY(-10vh) rotate(360deg); opacity:0;}
         }
-
-        /* Responsive canvas */
-        @media (max-width: 768px) {
-            canvas {
-                width: 200px;
-                height: 400px;
-            }
-            .controls {
-                display: flex;
-            }
+        @media (max-width:768px){
+            canvas{ width:200px; height:400px; }
         }
     </style>
 </head>
 
 <body>
-    <h1>💖 Romantik Tetris 💖</h1>
-    <button id="startBtn">Başlat</button>
-    <canvas id="game" width="300" height="600"></canvas>
+<h1>💖 Romantik Tetris 💖</h1>
+<button id="startBtn">Başlat</button>
+<canvas id="game" width="300" height="600"></canvas>
 
-    <div class="controls">
-        <button onclick="move(-1)">⬅️</button>
-        <button onclick="rotate()">🔄</button>
-        <button onclick="move(1)">➡️</button>
-        <button onclick="drop()">⬇️</button>
-    </div>
+<script>
+    // Kayan kalpler
+    for(let i=0;i<30;i++){
+        const heart=document.createElement('div');
+        heart.classList.add('heart');
+        heart.textContent='💖';
+        heart.style.left=Math.random()*100+'vw';
+        heart.style.fontSize=15+Math.random()*25+'px';
+        heart.style.animationDuration=5+Math.random()*10+'s';
+        heart.style.animationDelay=Math.random()*5+'s';
+        document.body.appendChild(heart);
+    }
 
-    <script>
-        // Kayan kalpler
-        const numHearts = 30;
-        for (let i = 0; i < numHearts; i++) {
-            const heart = document.createElement('div');
-            heart.classList.add('heart');
-            heart.textContent = '💖';
-            heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.fontSize = 15 + Math.random() * 25 + 'px';
-            heart.style.animationDuration = 5 + Math.random() * 10 + 's';
-            heart.style.animationDelay = Math.random() * 5 + 's';
-            document.body.appendChild(heart);
-        }
-
-        // Buton kovala logic
-        const startBtn = document.getElementById('startBtn');
-        let clicks = 0;
-
-        startBtn.addEventListener('click', () => {
-            clicks++;
-
-            if (clicks < 4) {
-                startBtn.style.top = Math.random() * 80 + 'vh';
-                startBtn.style.left = Math.random() * 80 + 'vw';
-            } else {
-                startBtn.textContent = '😄';
-                startBtn.style.top = '50%';
-                startBtn.style.left = '50%';
-                startBtn.style.transform = 'translate(-50%, -50%) scale(1.2)';
-                startBtn.onclick = () => {
-                    startBtn.style.display = 'none';
-                    document.getElementById('game').style.display = 'block';
-                    document.querySelector('.controls').style.display = 'flex';
-                    startTetris();
-                };
-            }
-        });
-
-        // -----------------------------
-        // Tetris kodu
-        // -----------------------------
-        const canvas = document.getElementById("game");
-        const ctx = canvas.getContext("2d");
-
-        let ROWS = 20;
-        let COLS = 10;
-        let SIZE = 30;
-
-        // Responsive ayar: mobilde küçült
-        function updateSize() {
-            if (window.innerWidth <= 768) {
-                SIZE = 20;
-                ROWS = 20;
-                COLS = 10;
-            } else {
-                SIZE = 30;
-                ROWS = 20;
-                COLS = 10;
+    const startBtn=document.getElementById('startBtn');
+    let clicks=0;
+    startBtn.addEventListener('click',()=>{
+        clicks++;
+        if(clicks<4){
+            startBtn.style.top=Math.random()*80+'vh';
+            startBtn.style.left=Math.random()*80+'vw';
+        } else{
+            startBtn.textContent='😄';
+            startBtn.style.top='50%';
+            startBtn.style.left='50%';
+            startBtn.style.transform='translate(-50%,-50%) scale(1.2)';
+            startBtn.onclick=()=>{
+                startBtn.style.display='none';
+                document.getElementById('game').style.display='block';
+                startTetris(true); // mobil true
             }
         }
-        updateSize();
-        window.addEventListener('resize', updateSize);
+    });
 
-        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    // -----------------------------
+    // Tetris kodu
+    // -----------------------------
+    const canvas=document.getElementById("game");
+    const ctx=canvas.getContext("2d");
 
-        const pieces = [
-            [[1, 1, 0], [1, 1, 1]], // heart shape
-            [[1, 1], [1, 1]],       // square
-            [[1,1,1],[0,1,0]]       // T shape
-        ];
+    let ROWS=20, COLS=10, SIZE=30;
+    function updateSize(){
+        if(window.innerWidth<=768){ SIZE=20; ROWS=20; COLS=10; }
+        else{ SIZE=30; ROWS=20; COLS=10; }
+    }
+    updateSize();
+    window.addEventListener('resize', updateSize);
 
-        let piece = null;
+    let board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
 
-        function drawCell(x, y, color="#ff4e8a") {
-            ctx.fillStyle = color;
-            ctx.fillRect(x*SIZE, y*SIZE, SIZE, SIZE);
-            ctx.strokeStyle = "#111";
-            ctx.strokeRect(x*SIZE, y*SIZE, SIZE, SIZE);
-        }
+    const pieces=[
+        [[1,1,0],[1,1,1]],
+        [[1,1],[1,1]],
+        [[1,1,1],[0,1,0]]
+    ];
 
-        function draw() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            for(let r=0;r<ROWS;r++){
-                for(let c=0;c<COLS;c++){
-                    if(board[r][c]) drawCell(c,r);
-                }
-            }
-            if(piece){
-                piece.shape.forEach((row,r)=>{
-                    row.forEach((val,c)=>{
-                        if(val) drawCell(piece.x+c, piece.y+r);
-                    });
-                });
-            }
-        }
+    let piece=null;
 
-        function collide() {
-            for(let r=0;r<piece.shape.length;r++){
-                for(let c=0;c<piece.shape[r].length;c++){
-                    if(piece.shape[r][c]){
-                        let newX = piece.x+c;
-                        let newY = piece.y+r;
-                        if(newX<0||newX>=COLS||newY>=ROWS||board[newY]?.[newX]) return true;
-                    }
-                }
-            }
-            return false;
-        }
+    function drawCell(x,y,color="#ff4e8a"){
+        ctx.fillStyle=color;
+        ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
+        ctx.strokeStyle="#111";
+        ctx.strokeRect(x*SIZE,y*SIZE,SIZE,SIZE);
+    }
 
-        function merge(){
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for(let r=0;r<ROWS;r++)
+            for(let c=0;c<COLS;c++)
+                if(board[r][c]) drawCell(c,r);
+        if(piece)
             piece.shape.forEach((row,r)=>{
                 row.forEach((val,c)=>{
-                    if(val) board[piece.y+r][piece.x+c]=1;
+                    if(val) drawCell(piece.x+c,piece.y+r);
                 });
             });
-        }
+    }
 
-        function clearLines(){
-            board = board.filter(row=>row.some(cell=>!cell));
-            while(board.length<ROWS) board.unshift(Array(COLS).fill(0));
-        }
+    function collide(){
+        for(let r=0;r<piece.shape.length;r++)
+            for(let c=0;c<piece.shape[r].length;c++)
+                if(piece.shape[r][c]){
+                    let newX=piece.x+c;
+                    let newY=piece.y+r;
+                    if(newX<0||newX>=COLS||newY>=ROWS||board[newY]?.[newX]) return true;
+                }
+        return false;
+    }
 
-        function newPiece(){
-            const shape = pieces[Math.floor(Math.random()*pieces.length)];
-            piece = {shape, x:4, y:0};
-            if(collide()){
-                alert("Oyun Bitti 💔");
-                board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-            }
-        }
+    function merge(){
+        piece.shape.forEach((row,r)=>{
+            row.forEach((val,c)=>{
+                if(val) board[piece.y+r][piece.x+c]=1;
+            });
+        });
+    }
 
-        function move(dir){
-            piece.x += dir;
-            if(collide()) piece.x -= dir;
-            draw();
-        }
+    function clearLines(){
+        board=board.filter(row=>row.some(cell=>!cell));
+        while(board.length<ROWS) board.unshift(Array(COLS).fill(0));
+    }
 
-        function rotate(){
-            const old = piece.shape;
-            const rotated = piece.shape[0].map((_,i)=>piece.shape.map(row=>row[i]).reverse());
-            piece.shape = rotated;
-            if(collide()) piece.shape = old;
-            draw();
+    function newPiece(){
+        const shape=pieces[Math.floor(Math.random()*pieces.length)];
+        piece={shape,x:4,y:0};
+        if(collide()){
+            alert("Oyun Bitti 💔");
+            board=Array.from({length:ROWS},()=>Array(COLS).fill(0));
         }
+    }
 
-        function drop(){
-            piece.y++;
-            if(collide()){
-                piece.y--;
-                merge();
-                clearLines();
-                newPiece();
-            }
-            draw();
-        }
+    function move(dir){
+        piece.x+=dir;
+        if(collide()) piece.x-=dir;
+        draw();
+    }
 
-        function startTetris(){
+    function rotate(){
+        const old=piece.shape;
+        const rotated=piece.shape[0].map((_,i)=>piece.shape.map(row=>row[i]).reverse());
+        piece.shape=rotated;
+        if(collide()) piece.shape=old;
+        draw();
+    }
+
+    function drop(){
+        piece.y++;
+        if(collide()){
+            piece.y--;
+            merge();
+            clearLines();
             newPiece();
-            draw();
-            setInterval(drop, 700);
+        }
+        draw();
+    }
 
-            // Keyboard controls
-            document.addEventListener("keydown", e=>{
+    function startTetris(isMobile=false){
+        newPiece();
+        draw();
+        setInterval(drop,700);
+
+        if(!isMobile){
+            document.addEventListener("keydown",e=>{
                 if(e.key==="ArrowLeft") move(-1);
                 if(e.key==="ArrowRight") move(1);
                 if(e.key==="ArrowDown") drop();
                 if(e.key==="ArrowUp") rotate();
             });
+        } else {
+            // Mobil dokunmatik kontrol
+            let touchStartX=0, touchStartY=0;
+            canvas.addEventListener("touchstart", e=>{
+                const touch=e.touches[0];
+                touchStartX=touch.clientX;
+                touchStartY=touch.clientY;
+            });
+            canvas.addEventListener("touchend", e=>{
+                const touch=e.changedTouches[0];
+                const dx=touch.clientX - touchStartX;
+                const dy=touch.clientY - touchStartY;
+                if(Math.abs(dx)>Math.abs(dy)){
+                    if(dx>10) move(1);
+                    else if(dx<-10) move(-1);
+                } else {
+                    if(dy>10) drop();
+                    else if(dy<-10) rotate();
+                }
+            });
         }
-    </script>
+    }
+</script>
 </body>
-
 </html>
