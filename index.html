@@ -22,11 +22,11 @@ canvas{
 </head>
 <body>
 <canvas id="canvas"></canvas>
+
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-// Resize canvas
 function resize(){
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -34,10 +34,10 @@ function resize(){
 resize();
 window.addEventListener("resize", resize);
 
-/* ---------------- MODLAR ---------------- */
+/* ---------------- MOD ---------------- */
 let mode = "intro";
 
-/* ---------------- INTRO ANIMASYONU ---------------- */
+/* ---------------- INTRO ---------------- */
 let y = -100;
 let velocity = 2;
 let gravity = 0.4;
@@ -70,23 +70,22 @@ function updateIntro(){
   drawIntro();
 }
 
-/* ---------------- KALP ARKAPLAN ---------------- */
+/* ---------------- KALPLER ---------------- */
 let hearts = [];
-let heartCount = 0;
-const maxHearts = 25; // performans için azaltıldı
+const maxHearts = 25;
 
-function spawnBackgroundHeart(){
-  if(heartCount >= maxHearts) return;
-  const x = Math.random() * canvas.width;
-  const y = -30;
-  const speed = 0.5 + Math.random() * 1.5; // daha yavaş
-  const size = 10 + Math.random() * 10;    // daha küçük
-  hearts.push({x, y, speed, size});
-  heartCount++;
+function spawnHeart(){
+  if(hearts.length >= maxHearts) return;
+  hearts.push({
+    x: Math.random() * canvas.width,
+    y: -30,
+    speed: 0.5 + Math.random() * 1.2,
+    size: 12 + Math.random() * 10
+  });
 }
 
 function updateHearts(){
-  spawnBackgroundHeart();
+  spawnHeart();
   hearts.forEach(h=>{
     h.y += h.speed;
     drawHeart(h.x, h.y, h.size);
@@ -97,9 +96,45 @@ function drawHeart(x,y,size){
   ctx.font = size + "px Arial";
   ctx.textAlign = "center";
   ctx.shadowColor = "#ff2e88";
-  ctx.shadowBlur = 6; // hafifletildi
+  ctx.shadowBlur = 6;
   ctx.fillStyle = "#ff4e8a";
   ctx.fillText("❤️", x, y);
+}
+
+/* ---------------- SAKURA ÇİÇEKLERİ ---------------- */
+let flowers = [];
+const maxFlowers = 30;
+
+function spawnFlower(){
+  if(flowers.length >= maxFlowers) return;
+
+  flowers.push({
+    x: Math.random() * canvas.width,
+    y: -30,
+    speed: 0.7 + Math.random() * 1.2,
+    size: 18 + Math.random() * 12,
+    sway: Math.random() * 2 + 1,
+    angle: Math.random() * Math.PI * 2,
+    emoji: ["🌸","🌺","🌷"][Math.floor(Math.random()*3)]
+  });
+}
+
+function updateFlowers(){
+  spawnFlower();
+  flowers.forEach(f=>{
+    f.y += f.speed;
+    f.angle += 0.02;
+    f.x += Math.sin(f.angle) * f.sway; // sağa sola salınım
+    drawFlower(f.x, f.y, f.size, f.emoji);
+  });
+}
+
+function drawFlower(x,y,size,emoji){
+  ctx.font = size + "px Arial";
+  ctx.textAlign = "center";
+  ctx.shadowColor = "#ff69b4";
+  ctx.shadowBlur = 10;
+  ctx.fillText(emoji, x, y);
 }
 
 /* ---------------- MESAJ ---------------- */
@@ -123,7 +158,6 @@ function updateMessage(){
   ctx.fillText(displayed, canvas.width/2, canvas.height/2);
 }
 
-/* ---------------- EN SON MESAJ ---------------- */
 function drawEndMessage(){
   let fontSize = Math.min(canvas.width/20, 50);
   ctx.font = "bold "+fontSize+"px Arial";
@@ -143,15 +177,17 @@ function loop(){
   } 
   else if(mode==="hearts"){
     updateHearts();
-    if(heartCount >= maxHearts && !messageStarted){
+    updateFlowers();
+    if(hearts.length >= maxHearts && !messageStarted){
       messageStarted = true;
       setTimeout(()=>{mode="message";},1000);
     }
   }
   else if(mode==="message"){
-    updateHearts(); // kalpler arka planda düşmeye devam etsin
+    updateHearts();
+    updateFlowers();
     updateMessage();
-    drawEndMessage(); // en son mesajı göster
+    drawEndMessage();
   }
 
   requestAnimationFrame(loop);
