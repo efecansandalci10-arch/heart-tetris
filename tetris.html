@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 
 <head>
     <meta charset="UTF-8">
-    <title>💖 Heart Tetris 💖</title>
+    <title>💖 Aşkım'a özel Tetris 💖</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -13,186 +13,71 @@
         }
 
         body {
-            background: linear-gradient(180deg, #1a0015, #000);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             height: 100vh;
-            font-family: Arial, sans-serif;
-            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
             overflow: hidden;
+            position: relative;
         }
 
         h1 {
-            margin-bottom: 10px;
-            color: #ff4e8a;
-            text-shadow: 0 0 15px #ff2e88;
+            position: relative;
+            z-index: 10;
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 0 0 10px #ff4e8a, 0 0 20px #ff2e88;
+            animation: pulse 2s infinite;
         }
 
-        canvas {
-            background: #111;
-            box-shadow: 0 0 25px #ff2e88;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
-        .controls {
-            margin-top: 15px;
-            display: flex;
-            gap: 15px;
-        }
-
-        button {
-            padding: 15px 20px;
+        .heart {
+            position: absolute;
             font-size: 20px;
-            border: none;
-            border-radius: 50px;
-            background: linear-gradient(45deg, #ff2e88, #ff4e8a);
-            color: white;
+            color: rgba(255, 46, 136, 0.7);
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10vh) rotate(360deg);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 
 <body>
+    <h1>💖 Romantik Vibes 💖</h1>
 
-    <h1>💖 Heart Tetris 💖</h1>
+    <script>
+        // 30 adet kayan kalp
+        const numHearts = 30;
 
-    <canvas id="game" width="300" height="600"></canvas>
-
-    <div class="controls">
-        <button onclick="move(-1)">⬅️</button>
-        <button onclick="rotate()">🔄</button>
-        <button onclick="move(1)">➡️</button>
-        <button onclick="drop()">⬇️</button>
-    </div>
-
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-const ROWS = 20;
-const COLS = 10;
-const SIZE = 30;
-
-let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-
-const heart = [
-    [1, 1, 0],
-    [1, 1, 1]
-];
-
-let piece = {
-    shape: heart,
-    x: 4,
-    y: 0
-};
-
-function drawCell(x, y) {
-    ctx.fillStyle = "#ff4e8a";
-    ctx.shadowColor = "#ff2e88";
-    ctx.shadowBlur = 10;
-    ctx.font = "20px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("💖", x * SIZE + SIZE / 2, y * SIZE + SIZE / 1.3);
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            if (board[r][c]) drawCell(c, r);
+        for (let i = 0; i < numHearts; i++) {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.textContent = '💖';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.fontSize = 15 + Math.random() * 25 + 'px';
+            heart.style.animationDuration = 5 + Math.random() * 10 + 's';
+            heart.style.animationDelay = Math.random() * 5 + 's';
+            document.body.appendChild(heart);
         }
-    }
-
-    piece.shape.forEach((row, r) => {
-        row.forEach((val, c) => {
-            if (val) drawCell(piece.x + c, piece.y + r);
-        });
-    });
-}
-
-function collide() {
-    for (let r = 0; r < piece.shape.length; r++) {
-        for (let c = 0; c < piece.shape[r].length; c++) {
-            if (piece.shape[r][c]) {
-                let newX = piece.x + c;
-                let newY = piece.y + r;
-
-                if (
-                    newX < 0 ||
-                    newX >= COLS ||
-                    newY >= ROWS ||
-                    board[newY]?.[newX]
-                ) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-function merge() {
-    piece.shape.forEach((row, r) => {
-        row.forEach((val, c) => {
-            if (val) {
-                board[piece.y + r][piece.x + c] = 1;
-            }
-        });
-    });
-}
-
-function clearLines() {
-    board = board.filter(row => row.some(cell => !cell));
-    while (board.length < ROWS) {
-        board.unshift(Array(COLS).fill(0));
-    }
-}
-
-function newPiece() {
-    piece = { shape: heart, x: 4, y: 0 };
-}
-
-function move(dir) {
-    piece.x += dir;
-    if (collide()) piece.x -= dir;
-    draw();
-}
-
-function rotate() {
-    const oldShape = piece.shape;
-
-    const rotated = piece.shape[0].map((_, i) =>
-        piece.shape.map(row => row[i]).reverse()
-    );
-
-    piece.shape = rotated;
-
-    if (collide()) {
-        piece.shape = oldShape;
-    }
-
-    draw();
-}
-
-function drop() {
-    piece.y++;
-    if (collide()) {
-        piece.y--;
-        merge();
-        clearLines();
-        newPiece();
-    }
-    draw();
-}
-
-function update() {
-    drop();
-}
-
-setInterval(update, 700);
-draw();
-</script>
-
+    </script>
 </body>
+
 </html>
