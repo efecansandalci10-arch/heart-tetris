@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>💖 Aşkım'a özel Tetris 💖</title>
+    <title>💖 Romantik Tetris Başlatıcı 💖</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -24,17 +24,29 @@
         }
 
         h1 {
-            position: relative;
-            z-index: 10;
-            font-size: 3rem;
-            color: #fff;
+            position: absolute;
+            top: 5%;
+            font-size: 2.5rem;
+            color: white;
             text-shadow: 0 0 10px #ff4e8a, 0 0 20px #ff2e88;
-            animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        #startBtn {
+            position: absolute;
+            padding: 20px 30px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff2e88, #ff4e8a);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        canvas {
+            display: none;
+            background: #111;
+            box-shadow: 0 0 25px #ff2e88;
         }
 
         .heart {
@@ -45,28 +57,21 @@
         }
 
         @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-10vh) rotate(360deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
         }
     </style>
 </head>
 
 <body>
-    <h1>💖 Romantik Vibes 💖</h1>
+    <h1>💖 Romantik Tetris 💖</h1>
+    <button id="startBtn">Başlat</button>
+    <canvas id="game" width="300" height="600"></canvas>
 
     <script>
-        // 30 adet kayan kalp
+        // Kayan kalpler
         const numHearts = 30;
-
         for (let i = 0; i < numHearts; i++) {
             const heart = document.createElement('div');
             heart.classList.add('heart');
@@ -76,6 +81,146 @@
             heart.style.animationDuration = 5 + Math.random() * 10 + 's';
             heart.style.animationDelay = Math.random() * 5 + 's';
             document.body.appendChild(heart);
+        }
+
+        // Buton kovala logic
+        const startBtn = document.getElementById('startBtn');
+        let clicks = 0;
+
+        startBtn.addEventListener('click', () => {
+            clicks++;
+
+            if (clicks < 4) {
+                // Rastgele pozisyon değiştir
+                startBtn.style.top = Math.random() * 80 + 'vh';
+                startBtn.style.left = Math.random() * 80 + 'vw';
+            } else {
+                // 4. tıklamada gülücük emoji ve Tetris başlat
+                startBtn.textContent = '😄';
+                startBtn.style.top = '50%';
+                startBtn.style.left = '50%';
+                startBtn.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                startBtn.onclick = () => {
+                    startBtn.style.display = 'none';
+                    document.getElementById('game').style.display = 'block';
+                    startTetris();
+                };
+            }
+        });
+
+        // -----------------------------
+        // Heart Tetris kodu (basitleştirilmiş)
+        // -----------------------------
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+
+        const ROWS = 20;
+        const COLS = 10;
+        const SIZE = 30;
+
+        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+
+        const pieces = [
+            [[1, 1, 0], [1, 1, 1]], // heart shape
+            [[1, 1], [1, 1]],       // square
+            [[1,1,1],[0,1,0]]       // T shape
+        ];
+
+        let piece = null;
+
+        function drawCell(x, y, color="#ff4e8a") {
+            ctx.fillStyle = color;
+            ctx.fillRect(x*SIZE, y*SIZE, SIZE, SIZE);
+            ctx.strokeStyle = "#111";
+            ctx.strokeRect(x*SIZE, y*SIZE, SIZE, SIZE);
+        }
+
+        function draw() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            for(let r=0;r<ROWS;r++){
+                for(let c=0;c<COLS;c++){
+                    if(board[r][c]) drawCell(c,r);
+                }
+            }
+            if(piece){
+                piece.shape.forEach((row,r)=>{
+                    row.forEach((val,c)=>{
+                        if(val) drawCell(piece.x+c, piece.y+r);
+                    });
+                });
+            }
+        }
+
+        function collide() {
+            for(let r=0;r<piece.shape.length;r++){
+                for(let c=0;c<piece.shape[r].length;c++){
+                    if(piece.shape[r][c]){
+                        let newX = piece.x+c;
+                        let newY = piece.y+r;
+                        if(newX<0||newX>=COLS||newY>=ROWS||board[newY]?.[newX]) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge(){
+            piece.shape.forEach((row,r)=>{
+                row.forEach((val,c)=>{
+                    if(val) board[piece.y+r][piece.x+c]=1;
+                });
+            });
+        }
+
+        function clearLines(){
+            board = board.filter(row=>row.some(cell=>!cell));
+            while(board.length<ROWS) board.unshift(Array(COLS).fill(0));
+        }
+
+        function newPiece(){
+            const shape = pieces[Math.floor(Math.random()*pieces.length)];
+            piece = {shape, x:4, y:0};
+            if(collide()){
+                alert("Oyun Bitti 💔");
+                board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            }
+        }
+
+        function move(dir){
+            piece.x += dir;
+            if(collide()) piece.x -= dir;
+            draw();
+        }
+
+        function rotate(){
+            const old = piece.shape;
+            const rotated = piece.shape[0].map((_,i)=>piece.shape.map(row=>row[i]).reverse());
+            piece.shape = rotated;
+            if(collide()) piece.shape = old;
+            draw();
+        }
+
+        function drop(){
+            piece.y++;
+            if(collide()){
+                piece.y--;
+                merge();
+                clearLines();
+                newPiece();
+            }
+            draw();
+        }
+
+        function startTetris(){
+            newPiece();
+            draw();
+            setInterval(drop, 700);
+            document.addEventListener("keydown", e=>{
+                if(e.key==="ArrowLeft") move(-1);
+                if(e.key==="ArrowRight") move(1);
+                if(e.key==="ArrowDown") drop();
+                if(e.key==="ArrowUp") rotate();
+            });
         }
     </script>
 </body>
