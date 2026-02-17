@@ -25,6 +25,11 @@ h1 {
     color:white;
     text-shadow:0 0 10px #ff4e8a,0 0 20px #ff2e88;
 }
+    @keyframes shine {
+    0% { text-shadow: 0 0 10px #fff, 0 0 20px #ff4e8a, 0 0 30px #ff2e88; }
+    50% { text-shadow: 0 0 20px #fff, 0 0 40px #ff4e8a, 0 0 60px #ff2e88; }
+    100% { text-shadow: 0 0 10px #fff, 0 0 20px #ff4e8a, 0 0 30px #ff2e88; }
+}
 #startBtn {
     position:absolute;
     padding:20px 30px;
@@ -59,11 +64,15 @@ canvas {
     left:50%;
     transform:translate(-50%,-50%);
     font-size:2rem;
-    color:#ff4e8a;
-    text-shadow:0 0 15px #ff2e88,0 0 25px #ff4e8a;
+    color:#fff;
+    text-align:center;
     display:none;
     z-index:10;
-    text-align:center;
+    padding: 20px 40px;
+    border-radius: 20px;
+    background: linear-gradient(45deg, rgba(255,46,136,0.7), rgba(255,200,200,0.5));
+    box-shadow: 0 0 20px rgba(255,46,136,0.6), 0 0 40px rgba(255,200,200,0.4);
+    animation: shine 2s infinite alternate;
 }
 @media (max-width:768px){
     canvas{ width:200px; height:400px; }
